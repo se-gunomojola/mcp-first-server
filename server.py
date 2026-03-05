@@ -88,6 +88,7 @@ def edit_document(
     docs[doc_id] = docs[doc_id].replace(old_str, new_str)
     return docs[doc_id]
 
+
 # Run the server
 if __name__ == "__main__":
     mcp.run()

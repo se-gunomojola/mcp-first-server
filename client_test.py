@@ -1,6 +1,9 @@
 import asyncio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+import json
+from pydantic import AnyUrl
+
 
 async def main():
     # Connect to your server
@@ -27,11 +30,11 @@ async def main():
             # Practice 3 - Read a document
             print("\n--- Reading deposition.md ---")
             result = await session.call_tool(
-                "read_doc_contents", 
+                "read_doc_contents",
                 {"doc_id": "deposition.md"}
             )
             print(result.content[0].text)
-           
+
             # Practice 4 - Get current time
             print("\n--- Getting current time ---")
             result = await session.call_tool("get_current_time", {})
@@ -40,9 +43,21 @@ async def main():
             # Practice 5 - Edit a document
             print("\n--- Editing deposition.md ---")
             result = await session.call_tool("edit_document", {
-                 "doc_id": "deposition.md",
-                 "old_str": "Angela Smith",
-                 "new_str": "John Doe"
-           })
+                "doc_id": "deposition.md",
+                "old_str": "Angela Smith",
+                "new_str": "John Doe"
+            })
             print(result.content[0].text)
+
+            # Practice 6 - Read resource (list all docs)
+            print("\n--- Listing all documents via resource ---")
+            result = await session.read_resource(AnyUrl("docs://documents"))
+            print(result.contents[0].text)
+
+            # Practice 7 - Read specific document via resource
+            print("\n--- Fetching report.pdf via resource ---")
+            result = await session.read_resource(AnyUrl("docs://documents/report.pdf"))
+            print(result.contents[0].text)
+
+
 asyncio.run(main())
