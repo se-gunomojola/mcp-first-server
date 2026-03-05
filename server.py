@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 from datetime import datetime
 from pydantic import Field
+from mcp import types
 import requests
 from bs4 import BeautifulSoup
 
@@ -18,12 +19,15 @@ docs = {
 }
 
 # Resources
+
+
 @mcp.resource(
     "docs://documents",
     mime_type="application/json"
 )
 def list_docs() -> list[str]:
     return list(docs.keys())
+
 
 @mcp.resource(
     "docs://documents/{doc_id}",
@@ -34,11 +38,40 @@ def fetch_doc(doc_id: str) -> str:
         raise ValueError(f"Doc with id {doc_id} not found")
     return docs[doc_id]
 
+
+# Prompt
+@mcp.prompt(
+    name="format",
+    description="Rewrites the contents of the document in Markdown format."
+)
+def format_document(
+    doc_id: str = Field(description="Id of the document to format")
+) -> list[types.PromptMessage]:
+    prompt = f"""
+Your goal is to reformat a document to be written with markdown syntax.
+
+The id of the document you need to reformat is:
+<document_id>
+{doc_id}
+</document_id>
+
+Add in headers, bullet points, tables, etc as necessary. Feel free to add in structure.
+Use the 'edit_document' tool to edit the document. After the document has been reformatted, confirm to the user that it has been updated.
+"""
+    return [
+        types.PromptMessage(
+            role="user",
+            content=types.TextContent(type="text", text=prompt)
+        )
+    ]
+
+
 # Tool 1 - Greet
 @mcp.tool()
 def greet(name: str) -> str:
     """Greets a person by name"""
     return f"Hello, {name}! MCP is working!"
+
 
 # Tool 2 - Date and Time
 @mcp.tool()
@@ -46,6 +79,7 @@ def get_current_time() -> str:
     """Returns the current date and time"""
     now = datetime.now()
     return f"Current date and time is: {now.strftime('%A, %B %d %Y at %H:%M:%S')}"
+
 
 # Tool 3 - Web Scraper
 @mcp.tool()
@@ -59,6 +93,7 @@ def scrape_url(url: str) -> str:
     text = soup.get_text(separator="\n", strip=True)
     return text[:3000]
 
+
 # Tool 4 - Read Document
 @mcp.tool(
     name="read_doc_contents",
@@ -69,8 +104,8 @@ def read_document(
 ):
     if doc_id not in docs:
         raise ValueError(f"Doc with id {doc_id} not found")
-    
     return docs[doc_id]
+
 
 # Tool 5 - Edit Document
 @mcp.tool(
@@ -79,12 +114,13 @@ def read_document(
 )
 def edit_document(
     doc_id: str = Field(description="Id of the document that will be edited"),
-    old_str: str = Field(description="The text to replace. Must match exactly, including whitespace."),
-    new_str: str = Field(description="The new text to insert in place of the old text.")
+    old_str: str = Field(
+        description="The text to replace. Must match exactly, including whitespace."),
+    new_str: str = Field(
+        description="The new text to insert in place of the old text.")
 ):
     if doc_id not in docs:
         raise ValueError(f"Doc with id {doc_id} not found")
-    
     docs[doc_id] = docs[doc_id].replace(old_str, new_str)
     return docs[doc_id]
 

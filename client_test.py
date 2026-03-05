@@ -59,5 +59,19 @@ async def main():
             result = await session.read_resource(AnyUrl("docs://documents/report.pdf"))
             print(result.contents[0].text)
 
+            # Practice 8 - List all prompts
+            print("\n--- Available Prompts ---")
+            prompts = await session.list_prompts()
+            for prompt in prompts.prompts:
+                print(f"- {prompt.name}: {prompt.description}")
+
+            # Practice 9 - Get a specific prompt
+            print("\n--- Getting format prompt for plan.md ---")
+            result = await session.get_prompt(
+                "format",
+                {"doc_id": "plan.md"}
+            )
+            print(result.messages[0].content.text)
+
 
 asyncio.run(main())
